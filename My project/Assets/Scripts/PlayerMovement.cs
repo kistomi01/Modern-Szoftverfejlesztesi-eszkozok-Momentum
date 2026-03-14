@@ -3,13 +3,19 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Vízszintes Mozgás")]
-    public float moveSpeed = 10f;
+    public float moveSpeed = 12f; 
     private float moveInput;
 
     [Header("Ugrás Beállítások")]
-    public float jumpForce = 14f;
-    public float fallMultiplier = 4f;      // Gyorsabb esés, kevésbé lebegős
-    public float lowJumpMultiplier = 3f;   // Gyorsabb rövid ugrás, ha elengeded
+    public float jumpForce = 11f;        
+    public float fallMultiplier = 6f;      
+    public float lowJumpMultiplier = 5f;   
+    
+    [Header("Sebesség Korlátozás")]
+    public float maxFallSpeed = 25f;       // A maximum sebesség zuhanáskor
+
+    [Header("Gravitáció Váltás")]
+    private bool isUpsideDown = false;
     
     [Header("Talajérzékelés")]
     public Transform groundCheck;
@@ -24,22 +30,27 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         
-        // Fontos: ne dőljön el a karakter a sarkaival ütközve
+        // Alapbeállítások a fizikai stabilitáshoz
         rb.freezeRotation = true;
-        
-        // Kezdésnek állítsuk a gravitációt alapértelmezettre, a kód módosítja majd
         rb.gravityScale = 1f;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
 
     void Update()
     {
-        // Bemenet lekérése (A/D vagy Nyilak)
+        // Bemenetek lekérése
         moveInput = Input.GetAxisRaw("Horizontal");
 
-        // Ugrás figyelése (Space vagy W)
+        // Ugrás figyelése
         if (Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.W))
         {
             jumpRequested = true;
+        }
+
+        // Gravitáció váltás: E gomb vagy Bal egérgomb
+        if (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0))
+        {
+            FlipGravity();
         }
     }
 
@@ -51,26 +62,48 @@ public class PlayerMovement : MonoBehaviour
         // Alap vízszintes mozgás
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
-        // Ugrás indítása
+        // Ugrás indítása (figyelembe véve az aktuális gravitációt)
         if (jumpRequested && isGrounded)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            float direction = isUpsideDown ? -1f : 1f;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * direction);
             jumpRequested = false; 
         }
 
-        // --- OKOS GRAVITÁCIÓ (Itt szűnik meg a lebegés) ---
         
-        if (rb.linearVelocity.y < 0) // Ha esünk lefelé
+        float currentGravity = isUpsideDown ? -1f : 1f;
+        
+        // Ha "esünk" (eltávolodunk a talajtól)
+        if ((!isUpsideDown && rb.linearVelocity.y < 0) || (isUpsideDown && rb.linearVelocity.y > 0))
         {
-            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
+            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * currentGravity * (fallMultiplier - 1) * Time.fixedDeltaTime;
         }
-        else if (rb.linearVelocity.y > 0 && !(Input.GetButton("Jump") || Input.GetKey(KeyCode.W))) // Ha ugrunk, de elengedtük a gombot
+        // Ha ugrunk, de elengedtük a gombot (rövid ugrás / low jump)
+        else if (((!isUpsideDown && rb.linearVelocity.y > 0) || (isUpsideDown && rb.linearVelocity.y < 0)) 
+                 && !(Input.GetButton("Jump") || Input.GetKey(KeyCode.W)))
         {
-            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
+            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * currentGravity * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
         }
 
-        // Ha a földön vagyunk, ne gyűjtsük az ugrási kérelmet
+        // Sebesség korlátozása (hogy ne gyorsuljon a végtelenségig)
+        float clampedY = Mathf.Clamp(rb.linearVelocity.y, -maxFallSpeed, maxFallSpeed);
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, clampedY);
+
         if (isGrounded) jumpRequested = false;
+    }
+
+    void FlipGravity()
+    {
+        isUpsideDown = !isUpsideDown;
+        rb.gravityScale *= -1f;
+
+        // LENDÜLET NULLÁZÁSA: Megszüntetjük a zuhanásból eredő sebességet váltáskor
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+
+        // Karakter vizuális megfordítása (Y tengelyen)
+        Vector3 scaler = transform.localScale;
+        scaler.y *= -1f;
+        transform.localScale = scaler;
     }
 
     // Segítség a beállításhoz a Scene nézetben
