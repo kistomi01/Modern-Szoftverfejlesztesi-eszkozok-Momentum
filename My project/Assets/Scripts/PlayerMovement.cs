@@ -1,210 +1,207 @@
 using UnityEngine;
+using UnityEngine.UI;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Vízszintes Mozgás")]
-    public float moveSpeed = 12f; 
+    public float moveSpeed = 12f;
     private float moveInput;
 
     [Header("Ugrás Beállítások")]
-    public float jumpForce = 11f;        
-    public float fallMultiplier = 6f;      
-    public float lowJumpMultiplier = 5f;   
-    
-    [Header("Sebesség Korlátozás")]
-    public float maxFallSpeed = 25f;       // A maximum sebesség zuhanáskor
+    public float jumpForce = 18f;
+    public float fallMultiplier = 5.5f;
+    public float lowJumpMultiplier = 12f; 
+    public float maxFallSpeed = 30f;
+    public float maxJumpHoldTime = 0.16f;
 
-    [Header("Gravitáció Váltás")]
-    private bool isUpsideDown = false;
-    
     [Header("Talajérzékelés")]
     public Transform groundCheck;
     public float checkRadius = 0.3f;
     public LayerMask whatIsGround;
+    public float coyoteTime = 0.1f;
+
+    [Header("Gravitáció Mérő (UI)")]
+    public float maxGravityTime = 5f;        
+    public float switchPenalty = 1f;         
+    public float rechargeRate = 1.5f;        
+    public float pixelsPerSecond = 40f;      // 1 másodperc hány pixel széles legyen a képernyőn?
+    public Slider gravityBar;                
+    public Image barFillImage;               
+    public Color fullColor = Color.cyan;     
+    public Color emptyColor = Color.red;    
     
-    [Header("Faldetektálás")]
-    public float wallCheckDistance = 0.4f;  // Távolság a fal detektálásához
-    private bool touchingWall = false;
-    private float wallNormal = 0f;  // Az oldalfalak normálja
-    
-    [Header("Platform Kezelés")]
-    private Collider2D lastGroundCollider = null;  // Az utolsó talaj amire léptünk
-    private Rigidbody2D platformRigidbody = null;  // A platform rigidbodya
-    
-    [Header("Coyote Time (Ugrás Toleerancia)")]
-    public float coyoteTime = 0.1f;  // Idő, amely alatt lehet ugrani a talaj elhagyása után
-    private float coyoteCounter = 0f;
-    
-    [Header("Ugrás Bugyok Javítása")]
-    private float jumpLockTimer = 0f;  // Időzítő az ugrás után
-    private const float jumpLockDuration = 0.05f;  // Rövid idő, ahol nem lehet újra ugrálni
-    private bool justJumped = false;  // Nyomon követjük, hogy épp ugrunk-e
-    
+    private float currentGravityTime;
     private Rigidbody2D rb;
+    private bool isUpsideDown = false;
     private bool jumpRequested;
     private bool isGrounded;
+    private float coyoteCounter;
+    private float jumpHoldCounter;
+    private Rigidbody2D platformRb;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        
-        // Alapbeállítások a fizikai stabilitáshoz
         rb.freezeRotation = true;
-        rb.gravityScale = 1f;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        
+        currentGravityTime = maxGravityTime;
+
+        if (gravityBar != null)
+        {
+            // 1. Beállítjuk a Slider belső értékeit
+            gravityBar.minValue = 0;
+            gravityBar.maxValue = maxGravityTime;
+            gravityBar.value = maxGravityTime;
+
+            // 2. DINAMIKUS MÉRETEZÉS: Átméretezzük a Slider-t a max idő alapján
+            // Így ha kevesebb az idő, rövidebb lesz a csík, de teljesen teli
+            RectTransform rt = gravityBar.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                float newWidth = maxGravityTime * pixelsPerSecond;
+                rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, newWidth);
+            }
+        }
     }
 
     void Update()
     {
-        // Bemenetek lekérése
         moveInput = Input.GetAxisRaw("Horizontal");
 
-        // Ugrás figyelése
         if (Input.GetButtonDown("Jump") || Input.GetKeyDown(KeyCode.W))
-        {
             jumpRequested = true;
-        }
 
-        // Gravitáció váltás: E gomb vagy Bal egérgomb
         if (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0))
         {
-            FlipGravity();
+            if (!isUpsideDown && currentGravityTime > switchPenalty)
+            {
+                currentGravityTime -= switchPenalty;
+                FlipGravity();
+            }
+            else if (isUpsideDown)
+            {
+                FlipGravity();
+            }
+        }
+
+        UpdateGravityMeter();
+    }
+
+    private void UpdateGravityMeter()
+    {
+        if (isUpsideDown)
+        {
+            currentGravityTime -= Time.deltaTime;
+
+            if (currentGravityTime <= 0)
+            {
+                currentGravityTime = 0;
+                FlipGravity();
+            }
+        }
+        else if (isGrounded)
+        {
+            currentGravityTime = Mathf.MoveTowards(currentGravityTime, maxGravityTime, rechargeRate * Time.deltaTime);
+        }
+
+        if (gravityBar != null)
+        {
+            gravityBar.value = currentGravityTime;
+            
+            if (barFillImage != null)
+            {
+                float ratio = currentGravityTime / maxGravityTime;
+                barFillImage.color = Color.Lerp(emptyColor, fullColor, ratio);
+            }
         }
     }
 
     void FixedUpdate()
     {
-        // Jump lock timer csökkentése
-        jumpLockTimer -= Time.fixedDeltaTime;
-        if (jumpLockTimer <= 0)
-        {
-            justJumped = false;
-        }
+        HandleGroundCheck();
+        HandleHorizontalMovement();
+        HandleJump();
+        ApplyCustomGravity();
+    }
 
-        // Talaj ellenőrzése (de csak akkor, ha nem vagyunk jumplock alatt)
-        if (jumpLockTimer <= 0)
-        {
-            Collider2D groundCollider = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
-            isGrounded = (groundCollider != null);
-            
-            if (isGrounded && groundCollider != lastGroundCollider)
-            {
-                lastGroundCollider = groundCollider;
-                platformRigidbody = groundCollider.GetComponent<Rigidbody2D>();
-            }
-            else if (!isGrounded)
-            {
-                lastGroundCollider = null;
-                platformRigidbody = null;
-            }
-        }
+    private void HandleGroundCheck()
+    {
+        Collider2D hit = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
+        isGrounded = hit != null;
 
-        // Fal detektálása (oldalirányú raycastok)
-        DetectWalls();
-
-        // Coyote Time kezelése: Ha grounded, resetelünk, ha nem, csökkentünk
         if (isGrounded)
         {
             coyoteCounter = coyoteTime;
+            platformRb = hit.GetComponent<Rigidbody2D>();
         }
         else
         {
             coyoteCounter -= Time.fixedDeltaTime;
+            platformRb = null;
         }
+    }
 
-        // Alap vízszintes mozgás
+    private void HandleHorizontalMovement()
+    {
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+    }
 
-        // Ugrás indítása (figyelembe véve az aktuális gravitációt és coyote time-ot)
+    private void HandleJump()
+    {
         if (jumpRequested && coyoteCounter > 0)
         {
-            float direction = isUpsideDown ? -1f : 1f;
-            
-            // A platform sebességének hozzáadása az ugráshoz (ha van mozgó platform)
-            float platformVelocity = 0f;
-            if (platformRigidbody != null)
-            {
-                platformVelocity = platformRigidbody.linearVelocity.y;
-            }
-            
-            // AddForce használata az impulzus módban - ez hatékonyabban legyőzi a falütközéseket
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, platformVelocity);  // Reset Y sebesség, platform sebességgel kezdve
-            rb.AddForce(Vector2.up * jumpForce * direction, ForceMode2D.Impulse);
-            
-            // Ha a fal mellett ugrunk, adjunk hozzá oldalirányú erőt a falból való kilépéshez
-            if (touchingWall && wallNormal != 0f)
-            {
-                rb.AddForce(Vector2.right * -wallNormal * (jumpForce * 0.5f), ForceMode2D.Impulse);
-            }
-            
+            float gravityDir = isUpsideDown ? -1f : 1f;
+            float pVelY = platformRb != null ? platformRb.linearVelocity.y : 0f;
+
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, pVelY);
+            rb.AddForce(Vector2.up * jumpForce * gravityDir, ForceMode2D.Impulse);
+
+            coyoteCounter = 0;
+            jumpHoldCounter = maxJumpHoldTime;
             jumpRequested = false;
-            coyoteCounter = 0f;
-            jumpLockTimer = jumpLockDuration;
-            justJumped = true;
+        }
+        
+        if (!Input.GetButton("Jump") && !Input.GetKey(KeyCode.W))
+            jumpRequested = false;
+    }
+
+    private void ApplyCustomGravity()
+    {
+        float gravityDir = isUpsideDown ? -1f : 1f;
+        float verticalVel = rb.linearVelocity.y * gravityDir;
+        bool jumpHeld = Input.GetButton("Jump") || Input.GetKey(KeyCode.W);
+
+        if (jumpHeld && jumpHoldCounter > 0f)
+            jumpHoldCounter -= Time.fixedDeltaTime;
+
+        if (verticalVel < 0)
+        {
+            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * gravityDir * (fallMultiplier - 1) * Time.fixedDeltaTime;
+        }
+        else if (verticalVel > 0 && (!jumpHeld || jumpHoldCounter <= 0f))
+        {
+            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * gravityDir * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
         }
 
-        
-        float currentGravity = isUpsideDown ? -1f : 1f;
-        
-        // Ha "esünk" (eltávolodunk a talajtól)
-        if ((!isUpsideDown && rb.linearVelocity.y < 0) || (isUpsideDown && rb.linearVelocity.y > 0))
-        {
-            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * currentGravity * (fallMultiplier - 1) * Time.fixedDeltaTime;
-        }
-        // Ha ugrunk, de elengedtük a gombot (rövid ugrás / low jump)
-        else if (((!isUpsideDown && rb.linearVelocity.y > 0) || (isUpsideDown && rb.linearVelocity.y < 0)) 
-                 && !(Input.GetButton("Jump") || Input.GetKey(KeyCode.W)))
-        {
-            rb.linearVelocity += Vector2.up * Physics2D.gravity.y * currentGravity * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
-        }
-
-        // Sebesség korlátozása (hogy ne gyorsuljon a végtelenségig)
         float clampedY = Mathf.Clamp(rb.linearVelocity.y, -maxFallSpeed, maxFallSpeed);
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, clampedY);
     }
 
-    void DetectWalls()
-    {
-        touchingWall = false;
-        wallNormal = 0f;
-
-        // Jobb oldal faldetektálása
-        RaycastHit2D rightHit = Physics2D.Raycast(rb.position, Vector2.right, wallCheckDistance, whatIsGround);
-        if (rightHit.collider != null)
-        {
-            touchingWall = true;
-            wallNormal = 1f;  // Jobbra van a fal
-        }
-
-        // Bal oldal faldetektálása
-        RaycastHit2D leftHit = Physics2D.Raycast(rb.position, Vector2.left, wallCheckDistance, whatIsGround);
-        if (leftHit.collider != null)
-        {
-            touchingWall = true;
-            wallNormal = -1f;  // Balra van a fal
-        }
-    }
-
-    void FlipGravity()
+    private void FlipGravity()
     {
         isUpsideDown = !isUpsideDown;
         rb.gravityScale *= -1f;
-
-        // LENDÜLET NULLÁZÁSA: Megszüntetjük a zuhanásból eredő sebességet váltáskor
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-
-        // Karakter vizuális megfordítása (Y tengelyen)
-        Vector3 scaler = transform.localScale;
-        scaler.y *= -1f;
-        transform.localScale = scaler;
+        transform.localScale = new Vector3(transform.localScale.x, -transform.localScale.y, transform.localScale.z);
     }
 
-    // Segítség a beállításhoz a Scene nézetben
     private void OnDrawGizmos()
     {
         if (groundCheck != null)
         {
-            Gizmos.color = Color.red;
+            Gizmos.color = isGrounded ? Color.green : Color.red;
             Gizmos.DrawWireSphere(groundCheck.position, checkRadius);
         }
     }
