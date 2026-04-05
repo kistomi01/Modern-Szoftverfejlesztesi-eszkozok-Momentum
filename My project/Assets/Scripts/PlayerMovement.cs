@@ -19,8 +19,26 @@ public class PlayerMovement : MonoBehaviour
     
     [Header("Talajérzékelés")]
     public Transform groundCheck;
-    public float checkRadius = 0.2f;
+    public float checkRadius = 0.3f;
     public LayerMask whatIsGround;
+    
+    [Header("Faldetektálás")]
+    public float wallCheckDistance = 0.4f;  // Távolság a fal detektálásához
+    private bool touchingWall = false;
+    private float wallNormal = 0f;  // Az oldalfalak normálja
+    
+    [Header("Platform Kezelés")]
+    private Collider2D lastGroundCollider = null;  // Az utolsó talaj amire léptünk
+    private Rigidbody2D platformRigidbody = null;  // A platform rigidbodya
+    
+    [Header("Coyote Time (Ugrás Toleerancia)")]
+    public float coyoteTime = 0.1f;  // Idő, amely alatt lehet ugrani a talaj elhagyása után
+    private float coyoteCounter = 0f;
+    
+    [Header("Ugrás Bugyok Javítása")]
+    private float jumpLockTimer = 0f;  // Időzítő az ugrás után
+    private const float jumpLockDuration = 0.05f;  // Rövid idő, ahol nem lehet újra ugrálni
+    private bool justJumped = false;  // Nyomon követjük, hogy épp ugrunk-e
     
     private Rigidbody2D rb;
     private bool jumpRequested;
@@ -56,18 +74,73 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Talaj ellenőrzése
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
+        // Jump lock timer csökkentése
+        jumpLockTimer -= Time.fixedDeltaTime;
+        if (jumpLockTimer <= 0)
+        {
+            justJumped = false;
+        }
+
+        // Talaj ellenőrzése (de csak akkor, ha nem vagyunk jumplock alatt)
+        if (jumpLockTimer <= 0)
+        {
+            Collider2D groundCollider = Physics2D.OverlapCircle(groundCheck.position, checkRadius, whatIsGround);
+            isGrounded = (groundCollider != null);
+            
+            if (isGrounded && groundCollider != lastGroundCollider)
+            {
+                lastGroundCollider = groundCollider;
+                platformRigidbody = groundCollider.GetComponent<Rigidbody2D>();
+            }
+            else if (!isGrounded)
+            {
+                lastGroundCollider = null;
+                platformRigidbody = null;
+            }
+        }
+
+        // Fal detektálása (oldalirányú raycastok)
+        DetectWalls();
+
+        // Coyote Time kezelése: Ha grounded, resetelünk, ha nem, csökkentünk
+        if (isGrounded)
+        {
+            coyoteCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteCounter -= Time.fixedDeltaTime;
+        }
 
         // Alap vízszintes mozgás
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
-        // Ugrás indítása (figyelembe véve az aktuális gravitációt)
-        if (jumpRequested && isGrounded)
+        // Ugrás indítása (figyelembe véve az aktuális gravitációt és coyote time-ot)
+        if (jumpRequested && coyoteCounter > 0)
         {
             float direction = isUpsideDown ? -1f : 1f;
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce * direction);
-            jumpRequested = false; 
+            
+            // A platform sebességének hozzáadása az ugráshoz (ha van mozgó platform)
+            float platformVelocity = 0f;
+            if (platformRigidbody != null)
+            {
+                platformVelocity = platformRigidbody.linearVelocity.y;
+            }
+            
+            // AddForce használata az impulzus módban - ez hatékonyabban legyőzi a falütközéseket
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, platformVelocity);  // Reset Y sebesség, platform sebességgel kezdve
+            rb.AddForce(Vector2.up * jumpForce * direction, ForceMode2D.Impulse);
+            
+            // Ha a fal mellett ugrunk, adjunk hozzá oldalirányú erőt a falból való kilépéshez
+            if (touchingWall && wallNormal != 0f)
+            {
+                rb.AddForce(Vector2.right * -wallNormal * (jumpForce * 0.5f), ForceMode2D.Impulse);
+            }
+            
+            jumpRequested = false;
+            coyoteCounter = 0f;
+            jumpLockTimer = jumpLockDuration;
+            justJumped = true;
         }
 
         
@@ -88,8 +161,28 @@ public class PlayerMovement : MonoBehaviour
         // Sebesség korlátozása (hogy ne gyorsuljon a végtelenségig)
         float clampedY = Mathf.Clamp(rb.linearVelocity.y, -maxFallSpeed, maxFallSpeed);
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, clampedY);
+    }
 
-        if (isGrounded) jumpRequested = false;
+    void DetectWalls()
+    {
+        touchingWall = false;
+        wallNormal = 0f;
+
+        // Jobb oldal faldetektálása
+        RaycastHit2D rightHit = Physics2D.Raycast(rb.position, Vector2.right, wallCheckDistance, whatIsGround);
+        if (rightHit.collider != null)
+        {
+            touchingWall = true;
+            wallNormal = 1f;  // Jobbra van a fal
+        }
+
+        // Bal oldal faldetektálása
+        RaycastHit2D leftHit = Physics2D.Raycast(rb.position, Vector2.left, wallCheckDistance, whatIsGround);
+        if (leftHit.collider != null)
+        {
+            touchingWall = true;
+            wallNormal = -1f;  // Balra van a fal
+        }
     }
 
     void FlipGravity()
