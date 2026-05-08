@@ -1,0 +1,28 @@
+{
+    "asset": "708d041faa4bb4c488d8cef756fb019f",
+    "fileName": "019e08e8-24b6-7cf9-acf1-d0a70c31a09b.png",
+    "prompt": "A single simplistic minimal 2D orange gem crystal, flat vector style, game asset, isolated on white background, strictly side view, no depth or 3D perspective, clean sharp edges",
+    "negativePrompt": "",
+    "model": "flux-2-dev",
+    "modelName": "Flux 2 (Dev)",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelatePixelGridSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0,
+    "dimensions": {
+        "width": 1024,
+        "height": 1024
+    },
+    "spriteSheet": false,
+    "duration": 0.0
+}

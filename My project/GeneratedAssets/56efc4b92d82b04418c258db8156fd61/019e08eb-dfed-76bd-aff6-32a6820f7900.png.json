@@ -1,0 +1,28 @@
+{
+    "asset": "56efc4b92d82b04418c258db8156fd61",
+    "fileName": "019e08eb-dfed-76bd-aff6-32a6820f7900.png",
+    "prompt": "A very simplistic flat 2D orange diamond gem, solid colors, thin black outline, flat vector style, game asset, isolated on white background, no glows or shading, simple icon",
+    "negativePrompt": "",
+    "model": "flux-2-dev",
+    "modelName": "Flux 2 (Dev)",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelatePixelGridSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0,
+    "dimensions": {
+        "width": 1024,
+        "height": 1024
+    },
+    "spriteSheet": false,
+    "duration": 0.0
+}

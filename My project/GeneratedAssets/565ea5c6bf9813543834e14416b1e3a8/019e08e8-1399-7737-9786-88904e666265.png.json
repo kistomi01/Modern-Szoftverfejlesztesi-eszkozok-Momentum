@@ -1,0 +1,28 @@
+{
+    "asset": "565ea5c6bf9813543834e14416b1e3a8",
+    "fileName": "019e08e8-1399-7737-9786-88904e666265.png",
+    "prompt": "A single simple minimal 2D round boulder, flat vector style, grey/tan colors, game asset, isolated on white background, strictly side view, no 3D perspective, smooth round shape",
+    "negativePrompt": "",
+    "model": "flux-2-dev",
+    "modelName": "Flux 2 (Dev)",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelatePixelGridSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0,
+    "dimensions": {
+        "width": 1024,
+        "height": 1024
+    },
+    "spriteSheet": false,
+    "duration": 0.0
+}
