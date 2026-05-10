@@ -1198,8 +1198,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 6
-  jumpForce: 50
-  doubleJumpForce: 50
+  jumpForce: 45
+  doubleJumpForce: 45
   controlmode: 1
   groundLayer:
     serializedVersion: 2

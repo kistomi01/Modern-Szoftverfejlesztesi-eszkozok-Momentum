@@ -964,8 +964,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 6
-  jumpForce: 50
-  doubleJumpForce: 50
+  jumpForce: 45
+  doubleJumpForce: 45
   controlmode: 1
   groundLayer:
     serializedVersion: 2
@@ -3143,11 +3143,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1257432869399111996, guid: 35f409698c2eb804292697d65adef0d0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 140.3
+      value: 57.13
       objectReference: {fileID: 0}
     - target: {fileID: 1257432869399111996, guid: 35f409698c2eb804292697d65adef0d0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.2
+      value: -3.13
       objectReference: {fileID: 0}
     - target: {fileID: 1257432869399111996, guid: 35f409698c2eb804292697d65adef0d0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -46351,7 +46351,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovingPlatform
   direction: {x: 0, y: 1}
   distance: 7
-  speed: 2
+  speed: 3
 --- !u!61 &1437317675
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -52067,7 +52067,7 @@ Transform:
   m_GameObject: {fileID: 1569516213}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 59, y: 4, z: 0}
+  m_LocalPosition: {x: 80.7116, y: 1.26, z: 0}
   m_LocalScale: {x: 2.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -52085,9 +52085,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5b5b04e8022c549b3e70b81aa4d9fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovingPlatform
-  direction: {x: 0, y: 1}
+  direction: {x: 1, y: 0}
   distance: 5
-  speed: 3
+  speed: 5
 --- !u!61 &1569516216
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -52127,7 +52127,7 @@ BoxCollider2D:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
     oldSize: {x: 1.9375, y: 1.21875}
-    newSize: {x: 2.5, y: 0.5}
+    newSize: {x: 0.86058646, y: 0.37026167}
     adaptiveTilingThreshold: 0.5
     drawMode: 2
     adaptiveTiling: 0
@@ -52188,7 +52188,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 2.5, y: 0.5}
+  m_Size: {x: 0.86058646, y: 0.37026167}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -53773,11 +53773,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1257432869399111996, guid: 35f409698c2eb804292697d65adef0d0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 53.22
+      value: 58.93
       objectReference: {fileID: 0}
     - target: {fileID: 1257432869399111996, guid: 35f409698c2eb804292697d65adef0d0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.18
+      value: 5.76
       objectReference: {fileID: 0}
     - target: {fileID: 1257432869399111996, guid: 35f409698c2eb804292697d65adef0d0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -54006,7 +54006,7 @@ Transform:
   m_GameObject: {fileID: 2138278601}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 53, y: 5, z: 0}
+  m_LocalPosition: {x: 59.02, y: 4.85, z: 0}
   m_LocalScale: {x: 2.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -54066,7 +54066,7 @@ BoxCollider2D:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
     oldSize: {x: 1.9375, y: 1.21875}
-    newSize: {x: 2.5, y: 0.5}
+    newSize: {x: 1.0123305, y: 0.59514713}
     adaptiveTilingThreshold: 0.5
     drawMode: 2
     adaptiveTiling: 0
@@ -54127,7 +54127,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 2.5, y: 0.5}
+  m_Size: {x: 1.0123305, y: 0.59514713}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
