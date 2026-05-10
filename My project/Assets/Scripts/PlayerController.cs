@@ -1,63 +1,57 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Tilemaps;
 
-public enum Controls { mobile,pc}
+// Meghatározzuk a vezérlési módokat, hogy ne legyen CS0246 hiba
+public enum Controls { mobile, pc }
 
 public class PlayerController : MonoBehaviour
 {
-
-
+    [Header("Mozgás Beállítások")]
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
     public float doubleJumpForce = 8f;
+    public Controls controlmode;
+
+    [Header("Talajérzékelés")]
     public LayerMask groundLayer;
     public Transform groundCheck;
-
-    private Rigidbody2D rb;
     private bool isGroundedBool = false;
     private bool canDoubleJump = false;
 
+    [Header("Effektek & Animáció")]
     public Animator playeranim;
-
-    public Controls controlmode;
-   
-
-    private float moveX;
-    public bool isPaused = false;
-
     public ParticleSystem footsteps;
     private ParticleSystem.EmissionModule footEmissions;
-
     public ParticleSystem ImpactEffect;
     private bool wasonGround;
 
+    [Header("Harcrendszer & Státusz")]
+    public float fireRate = 0.5f; 
+    private float nextFireTime = 0f; 
+    private Vector3 damagePosition;
+    public bool isInvulnerable = false;
+    public float invulnerabilityDuration = 1.5f;
+    private Vector3 lastGroundedPosition;
 
-   // public GameObject projectile;
-   // public Transform firePoint;
-
-    public float fireRate = 0.5f; // Time between each shot
-    private float nextFireTime = 0f; // Time of the next allowed shot
-
-
-    
-
-
-
+    private Rigidbody2D rb;
+    private float moveX;
+    public bool isPaused = false;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        footEmissions = footsteps.emission;
+        if (footsteps != null) footEmissions = footsteps.emission;
 
-        if (controlmode == Controls.mobile)
+        if (controlmode == Controls.mobile && UIManager.instance != null)
         {
             UIManager.instance.EnableMobileControls();
         }
 
-
+        damagePosition = transform.position;
+        lastGroundedPosition = transform.position;
     }
 
     private void Update()
@@ -72,13 +66,13 @@ public class PlayerController : MonoBehaviour
 
         if (isGroundedBool)
         {
-            canDoubleJump = true; // Reset double jump when grounded
+            lastGroundedPosition = transform.position;
+            canDoubleJump = true; 
 
             if (controlmode == Controls.pc)
             {
-                moveX = Input.GetAxis("Horizontal");
+                moveX = Input.GetAxisRaw("Horizontal");
             }
-
 
             if (Input.GetButtonDown("Jump"))
             {
@@ -87,18 +81,24 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
+            // JAVÍTÁS: Csak akkor engedünk dupla ugrást, ha a gombot MOST nyomták meg és még van rá lehetőség
             if (canDoubleJump && Input.GetButtonDown("Jump"))
             {
                 Jump(doubleJumpForce);
-                canDoubleJump = false; // Disable double jump until grounded again
+                canDoubleJump = false; 
+            }
+            
+            if (controlmode == Controls.pc)
+            {
+                moveX = Input.GetAxisRaw("Horizontal");
             }
         }
 
-        // Handle shooting
+        // Lövés kezelése (ha van ilyen funkciód)
         if (controlmode == Controls.pc && Input.GetButtonDown("Fire1") && Time.time >= nextFireTime)
         {
             Shoot();
-            nextFireTime = Time.time + 1f / fireRate; // Set the next allowed fire time
+            nextFireTime = Time.time + 1f / fireRate;
         }
 
         SetAnimations();
@@ -108,51 +108,38 @@ public class PlayerController : MonoBehaviour
             FlipSprite(moveX);
         }
 
-        //impactEffect
-
-        if(!wasonGround && isGroundedBool)
+        // Földet érés effekt
+        if (!wasonGround && isGroundedBool && ImpactEffect != null)
         {
             ImpactEffect.gameObject.SetActive(true);
             ImpactEffect.Stop();
-            ImpactEffect.transform.position = new Vector2(footsteps.transform.position.x,footsteps.transform.position.y-0.2f);
+            ImpactEffect.transform.position = groundCheck.position;
             ImpactEffect.Play();
         }
 
         wasonGround = isGroundedBool;
-
-        
     }
+
     public void SetAnimations()
     {
-        if (moveX != 0 && isGroundedBool && !isPaused)
-        {
-            playeranim.SetBool("run", true);
-            footEmissions.rateOverTime= 35f;
-        }
-        else
-        {
-            playeranim.SetBool("run",false);
-            footEmissions.rateOverTime = 0f;
-        }
+        if (playeranim == null) return;
+
+        bool isRunning = Mathf.Abs(moveX) > 0.1f && isGroundedBool && !isPaused;
+        playeranim.SetBool("run", isRunning);
+        
+        if (footsteps != null)
+            footEmissions.rateOverTime = isRunning ? 35f : 0f;
 
         playeranim.SetBool("isGrounded", isGroundedBool);
-       
     }
 
     private void FlipSprite(float direction)
     {
         if (isPaused) return;
-        if (direction > 0)
-        {
-            // Moving right, flip sprite to the right
-            transform.localScale = new Vector3(1, 1, 1);
-        }
-        else if (direction < 0)
-        {
-            // Moving left, flip sprite to the left
-            transform.localScale = new Vector3(-1, 1, 1);
-        }
+        if (direction > 0) transform.localScale = new Vector3(1, 1, 1);
+        else if (direction < 0) transform.localScale = new Vector3(-1, 1, 1);
     }
+
     private void FixedUpdate()
     {
         if (isPaused)
@@ -161,98 +148,106 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Player movement
-        if (controlmode == Controls.pc)
-        {
-            moveX = Input.GetAxis("Horizontal");
-        }
-       
-
-
         rb.linearVelocity = new Vector2(moveX * moveSpeed, rb.linearVelocity.y);
     }
 
-    private void Jump(float jumpForce)
+    private void Jump(float force)
     {
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0); // Zero out vertical velocity
-        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-        playeranim.SetTrigger("jump");
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0); 
+        rb.AddForce(Vector2.up * force, ForceMode2D.Impulse);
+        if (playeranim != null) playeranim.SetTrigger("jump");
     }
 
     private bool IsGrounded()
     {
-        float rayLength = 0.25f;
-        Vector2 rayOrigin = new Vector2(groundCheck.transform.position.x, groundCheck.transform.position.y - 0.1f);
-        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, rayLength, groundLayer);
-        return hit.collider != null;
+        // Megnöveltük a sugarat 0.3-ra a biztosabb érzékelés érdekében.
+        // Kizárjuk a játékos saját colliderét és minden gyermekét, hogy ne legyen végtelen ugrás.
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(groundCheck.position, 0.3f, groundLayer);
+        foreach (var col in colliders)
+        {
+            if (col.transform.root != transform.root && !col.isTrigger) 
+            {
+                return true;
+            }
+        }
+        return false;
     }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.gameObject.tag == "killzone")
+        if (isInvulnerable) return;
+
+        if (collision.gameObject.CompareTag("killzone"))
         {
-            GameManager.instance.Death();
+            damagePosition = lastGroundedPosition;
+            HealthManager.instance.HurtPlayer();
+            return;
         }
-    }
-    
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //mobile;
-    public void MobileMove(float value)
-    {
-        moveX = value;
-    }
-    public void MobileJump()
-    {
-        if (isGroundedBool)
+        // Tüskék és egyedi csempék érzékelése
+        Tilemap tilemap = collision.gameObject.GetComponent<Tilemap>();
+        if (tilemap != null)
         {
-            // Perform initial jump
-            Jump(jumpForce);
-        }
-        else
-        {
-            // Perform double jump if allowed
-            if (canDoubleJump)
+            foreach (ContactPoint2D contact in collision.contacts)
             {
-                Jump(doubleJumpForce);
-                canDoubleJump = false; // Disable double jump until grounded again
+                Vector3Int tilePos = tilemap.WorldToCell(contact.point - contact.normal * 0.1f);
+                TileBase tile = tilemap.GetTile(tilePos);
+                if (tile != null && (tile.name.Contains("Spike") || tile.name.Contains("Tree")))
+                {
+                    damagePosition = transform.position;
+                    HealthManager.instance.HurtPlayer();
+                    break;
+                }
             }
         }
     }
 
-    public void Shoot()
+    public void TakeDamage()
     {
-        //GameObject fireBall = Instantiate(projectile, firePoint.position, Quaternion.identity);
-        //fireBall.GetComponent<Rigidbody2D>().AddForce(firePoint.right * 500f);
+        if (isInvulnerable) return;
+        damagePosition = transform.position;
+        HealthManager.instance.HurtPlayer();
     }
 
-    public void MobileShoot()
+    // JAVÍTÁS: A Respawn most már teljesen alaphelyzetbe állítja a mozgást
+    public void RespawnAtDamagePoint()
     {
-        if (Time.time >= nextFireTime)
+        if (rb != null) 
         {
-            Shoot();
-            nextFireTime = Time.time + 1f / fireRate; // Set the next allowed fire time
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
         }
+
+        transform.position = damagePosition;
+
+        // Töröljük a beragadt ugrásokat
+        canDoubleJump = false; 
+        moveX = 0;
+        wasonGround = true;
+
+        StopAllCoroutines(); 
+        StartCoroutine(InvulnerabilityCoroutine());
     }
 
+    private IEnumerator InvulnerabilityCoroutine()
+    {
+        isInvulnerable = true;
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        
+        float elapsed = 0f;
+        while (elapsed < invulnerabilityDuration)
+        {
+            if (sr != null) sr.enabled = !sr.enabled; // Villogás
+            yield return new WaitForSeconds(0.1f);
+            elapsed += 0.1f;
+        }
+
+        if (sr != null) sr.enabled = true;
+        isInvulnerable = false;
+    }
+
+    private void Shoot()
+    {
+        Debug.Log("Lövés!");
+    }
 }

@@ -567,6 +567,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 160883610}
+  - component: {fileID: 160883611}
   m_Layer: 5
   m_Name: GameUI
   m_TagString: Untagged
@@ -598,6 +599,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &160883611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 160883609}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d680b54fe796791438ac9a5c9f52806a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthManager
+  damageEffect: {fileID: 0}
+  currentHealth: 0
+  hearts:
+  - {fileID: 2029596583}
+  - {fileID: 409198552}
+  - {fileID: 807468120}
+  FullHeartSprite: {fileID: 21300000, guid: 24862ddb8805ff246982e1ce0c63f61b, type: 3}
+  EmptyHeartSprite: {fileID: 0}
 --- !u!1 &174523675
 GameObject:
   m_ObjectHideFlags: 0
@@ -944,17 +965,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 6
   jumpForce: 50
-  doubleJumpForce: 30
+  doubleJumpForce: 50
+  controlmode: 1
   groundLayer:
     serializedVersion: 2
-    m_Bits: 9
+    m_Bits: 73
   groundCheck: {fileID: 261413212}
   playeranim: {fileID: 1314535123}
-  controlmode: 1
-  isPaused: 0
   footsteps: {fileID: 1246087308}
   ImpactEffect: {fileID: 1516487509}
   fireRate: 0.5
+  isInvulnerable: 0
+  invulnerabilityDuration: 1.5
+  isPaused: 0
 --- !u!1 &261413211
 GameObject:
   m_ObjectHideFlags: 0
@@ -980,7 +1003,7 @@ Transform:
   m_GameObject: {fileID: 261413211}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.75, z: 0}
+  m_LocalPosition: {x: 0, y: -0.87, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1670,13 +1693,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1330789357}
         m_TargetAssemblyTypeName: Events, Assembly-CSharp
         m_MethodName: Menu
-        m_Mode: 1
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -3402,7 +3425,7 @@ Camera:
   far clip plane: 5000
   field of view: 40
   orthographic: 1
-  orthographic size: 7
+  orthographic size: 8
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -53365,7 +53388,7 @@ MonoBehaviour:
   m_Follow: {fileID: 260902931}
   m_Lens:
     FieldOfView: 40
-    OrthographicSize: 7
+    OrthographicSize: 8
     NearClipPlane: 0.1
     FarClipPlane: 5000
     Dutch: 0

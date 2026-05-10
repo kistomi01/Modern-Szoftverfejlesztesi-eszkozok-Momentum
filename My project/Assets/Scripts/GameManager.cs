@@ -166,11 +166,29 @@ public class GameManager : MonoBehaviour
 
             StartCoroutine(DeathCoroutine());
             Debug.Log("Player meghalt.");
-        }
-    }
+            }
+            }
 
-    public IEnumerator DeathCoroutine()
-    {
+            public void DamageRespawn()
+            {
+            ResetBoulders();
+            if (playerController != null)
+            {
+            playerController.RespawnAtDamagePoint();
+            }
+            }
+
+            public void ResetBoulders()
+            {
+            Boulder[] boulders = Object.FindObjectsByType<Boulder>(FindObjectsSortMode.None);
+            foreach (var b in boulders)
+            {
+            b.ResetBoulder();
+            }
+            }
+
+            public IEnumerator DeathCoroutine()
+{
         yield return new WaitForSeconds(2f);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

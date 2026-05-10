@@ -24,6 +24,26 @@ public class Events : MonoBehaviour
         }
     }
 
+    public void Level()
+    {
+        SceneManager.LoadScene(1);
+    }
+
+    public void LoadLevelByIndex(int index)
+    {
+        SceneManager.LoadScene(index);
+    }
+
+    public void SetGameObjectActive(GameObject go)
+    {
+        if (go != null) go.SetActive(true);
+    }
+
+    public void SetGameObjectInactive(GameObject go)
+    {
+        if (go != null) go.SetActive(false);
+    }
+
     public void Quit()
     {
         Application.Quit();

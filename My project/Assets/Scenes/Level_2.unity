@@ -37278,13 +37278,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1679610612}
         m_TargetAssemblyTypeName: Events, Assembly-CSharp
         m_MethodName: Menu
-        m_Mode: 1
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -38454,17 +38454,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 6
   jumpForce: 50
-  doubleJumpForce: 30
+  doubleJumpForce: 50
+  controlmode: 1
   groundLayer:
     serializedVersion: 2
-    m_Bits: 9
+    m_Bits: 73
   groundCheck: {fileID: 1539562143}
   playeranim: {fileID: 1128167358}
-  controlmode: 1
-  isPaused: 0
   footsteps: {fileID: 264935503}
   ImpactEffect: {fileID: 66740003}
   fireRate: 0.5
+  isInvulnerable: 0
+  invulnerabilityDuration: 1.5
+  isPaused: 0
 --- !u!4 &929427480
 Transform:
   m_ObjectHideFlags: 0
@@ -38727,8 +38729,8 @@ Transform:
   m_GameObject: {fileID: 990764619}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60.93, y: 1.95, z: 0}
-  m_LocalScale: {x: 1, y: 1.5, z: 1}
+  m_LocalPosition: {x: 60.6704, y: 2.4585, z: 0}
+  m_LocalScale: {x: 1.5193, y: 2.517, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -38801,6 +38803,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1032730333}
+  - component: {fileID: 1032730334}
   m_Layer: 5
   m_Name: GameUI
   m_TagString: Untagged
@@ -38832,6 +38835,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1032730334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032730332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d680b54fe796791438ac9a5c9f52806a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthManager
+  damageEffect: {fileID: 0}
+  currentHealth: 0
+  hearts:
+  - {fileID: 837266298}
+  - {fileID: 900200651}
+  - {fileID: 2117681754}
+  FullHeartSprite: {fileID: 21300000, guid: 24862ddb8805ff246982e1ce0c63f61b, type: 3}
+  EmptyHeartSprite: {fileID: 0}
 --- !u!1 &1050041974
 GameObject:
   m_ObjectHideFlags: 0
@@ -39324,7 +39347,7 @@ Transform:
   m_GameObject: {fileID: 1128167357}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.31, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -41295,7 +41318,7 @@ Transform:
   m_GameObject: {fileID: 1539562142}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.75, z: 0}
+  m_LocalPosition: {x: 0, y: -0.87, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
