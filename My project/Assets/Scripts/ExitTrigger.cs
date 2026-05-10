@@ -1,28 +1,34 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ExitTrigger : MonoBehaviour
 {
-    //public Animator anim;
+    private bool isTriggered = false;
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.tag == "Player")
+        if (isTriggered) return;
+
+        if (collision.CompareTag("Player"))
         {
-            StartCoroutine("LevelExit");
+            isTriggered = true;
+            
+            var pc = collision.GetComponent<PlayerController>();
+            if (pc != null)
+            {
+                pc.isPaused = true;
+                var rb = pc.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector2.zero;
+                    rb.bodyType = RigidbodyType2D.Kinematic;
+                }
+            }
+
+            // Azonnal hívjuk a Managert, nem várunk itt helyben
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.LevelComplete();
+            }
         }
-    }
-
-    IEnumerator LevelExit()
-    {
-        //anim.SetTrigger("Exit");
-        yield return new WaitForSeconds(0.1f);
-
-        UIManager.instance.fadeToBlack = true;
-
-        yield return new WaitForSeconds(2f);
-        // Do something after flag anim
-        GameManager.instance.LevelComplete();
     }
 }

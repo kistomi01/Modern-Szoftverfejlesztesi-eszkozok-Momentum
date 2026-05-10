@@ -62,6 +62,12 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (isPaused)
+        {
+            moveX = 0;
+            return;
+        }
+
         isGroundedBool = IsGrounded();
 
         if (isGroundedBool)
@@ -88,22 +94,13 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (!isPaused)
+        // Handle shooting
+        if (controlmode == Controls.pc && Input.GetButtonDown("Fire1") && Time.time >= nextFireTime)
         {
-            // Calculate rotation angle based on mouse position
-            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3 lookDirection = mousePosition - transform.position;
-            float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
-
-            // ... (your existing code for rotation)
-
-            // Handle shooting
-            if (controlmode == Controls.pc && Input.GetButtonDown("Fire1") && Time.time >= nextFireTime)
-            {
-                Shoot();
-                nextFireTime = Time.time + 1f / fireRate; // Set the next allowed fire time
-            }
+            Shoot();
+            nextFireTime = Time.time + 1f / fireRate; // Set the next allowed fire time
         }
+
         SetAnimations();
 
         if (moveX != 0)
@@ -127,7 +124,7 @@ public class PlayerController : MonoBehaviour
     }
     public void SetAnimations()
     {
-        if (moveX != 0 && isGroundedBool)
+        if (moveX != 0 && isGroundedBool && !isPaused)
         {
             playeranim.SetBool("run", true);
             footEmissions.rateOverTime= 35f;
@@ -144,6 +141,7 @@ public class PlayerController : MonoBehaviour
 
     private void FlipSprite(float direction)
     {
+        if (isPaused) return;
         if (direction > 0)
         {
             // Moving right, flip sprite to the right
@@ -157,6 +155,12 @@ public class PlayerController : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        if (isPaused)
+        {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            return;
+        }
+
         // Player movement
         if (controlmode == Controls.pc)
         {

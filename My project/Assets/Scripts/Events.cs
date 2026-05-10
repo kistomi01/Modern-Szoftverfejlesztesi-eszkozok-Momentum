@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,10 +7,23 @@ public class Events : MonoBehaviour
     {
         SceneManager.LoadScene(0);
     }
-    public void Level()
+
+    public void Continue()
     {
-        SceneManager.LoadScene(1);
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.LoadNextLevel();
+        }
     }
+
+    public void Retry()
+    {
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.RetryLevel();
+        }
+    }
+
     public void Quit()
     {
         Application.Quit();

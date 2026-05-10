@@ -7,44 +7,50 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
-
+    [Header("UI References")]
     [SerializeField] private TMP_Text coinText;
+    [SerializeField] private GameObject levelCompletePanel;
+    [SerializeField] private TMP_Text leveCompletePanelTitle;
+    [SerializeField] private TMP_Text levelCompleteCoins;
 
+    [Header("Player Reference")]
     [SerializeField] private PlayerController playerController;
 
     private int coinCount = 0;
     private int gemCount = 0;
-    private bool isGameOver = false;
-    private Vector3 playerPosition;
-
-    //Level Complete
-
-    [SerializeField] GameObject levelCompletePanel;
-    [SerializeField] TMP_Text leveCompletePanelTitle;
-    [SerializeField] TMP_Text levelCompleteCoins;
-
-
-
-
-   
     private int totalCoins = 0;
-  
-
-
+    private bool isGameOver = false;
+    private bool isLevelComplete = false; // Új: Megakadályozza a többszöri befejezést
 
     private void Awake()
     {
-        instance = this;
+        // Singleton minta megerősítése
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+
         Application.targetFrameRate = 60;
     }
 
     private void Start()
     {
-        UpdateGUI();
-        UIManager.instance.fadeFromBlack = true;
-        playerPosition = playerController.transform.position;
+        isGameOver = false;
+        isLevelComplete = false;
+        coinCount = 0;
+
+        // Kezdő sötétítés feloldása
+        if (UIManager.instance != null)
+        {
+            UIManager.instance.fadeFromBlack = true;
+        }
 
         FindTotalPickups();
+        UpdateGUI();
     }
 
     public void IncrementCoinCount()
@@ -52,44 +58,23 @@ public class GameManager : MonoBehaviour
         coinCount++;
         UpdateGUI();
     }
+
     public void IncrementGemCount()
     {
         gemCount++;
-        UpdateGUI();
     }
 
     private void UpdateGUI()
     {
-        coinText.text = coinCount.ToString();
-  
-    }
-
-    public void Death()
-    {
-        if (!isGameOver)
+        if (coinText != null)
         {
-            // Disable Mobile Controls
-            UIManager.instance.DisableMobileControls();
-            // Initiate screen fade
-            UIManager.instance.fadeToBlack = true;
-
-            // Disable the player object
-            playerController.gameObject.SetActive(false);
-
-            // Start death coroutine to wait and then respawn the player
-            StartCoroutine(DeathCoroutine());
-
-            // Update game state
-            isGameOver = true;
-
-            // Log death message
-            Debug.Log("Died");
+            coinText.text = coinCount.ToString() + " / " + totalCoins.ToString();
         }
     }
- 
+
     public void FindTotalPickups()
     {
-
+        totalCoins = 0;
         pickup[] pickups = GameObject.FindObjectsOfType<pickup>();
 
         foreach (pickup pickupObject in pickups)
@@ -98,41 +83,100 @@ public class GameManager : MonoBehaviour
             {
                 totalCoins += 1;
             }
-           
         }
-
-
-      
     }
+
+    // --- PÁLYA VÉGE LOGIKA ---
+
     public void LevelComplete()
     {
-       
+        // Ha már folyamatban van a befejezés vagy a halál, ne fusson le újra
+        if (isLevelComplete || isGameOver) return;
+        
+        isLevelComplete = true;
 
-
-        levelCompletePanel.SetActive(true);
-        leveCompletePanelTitle.text = "LEVEL COMPLETE";
-
-
-
-        levelCompleteCoins.text = "COINS COLLECTED: "+ coinCount.ToString() +" / " + totalCoins.ToString();
- 
-    }
-   
-    public IEnumerator DeathCoroutine()
-    {
-        yield return new WaitForSeconds(1f);
-        playerController.transform.position = playerPosition;
-
-        // Wait for 2 seconds
-        yield return new WaitForSeconds(1f);
-
-        // Check if the game is still over (in case player respawns earlier)
-        if (isGameOver)
+        // Játékos megállítása
+        if (playerController != null)
         {
-            SceneManager.LoadScene(1);
+            playerController.isPaused = true;
+            Rigidbody2D rb = playerController.GetComponent<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.bodyType = RigidbodyType2D.Kinematic; // Megállítja a fizikát, hogy ne triggereljen többször
+            }
+        }
 
-            
+        // Képernyő sötétítése
+        if (UIManager.instance != null)
+        {
+            UIManager.instance.fadeToBlack = true;
+        }
+
+        StartCoroutine(LevelCompleteCoroutine());
+    }
+
+    private IEnumerator LevelCompleteCoroutine()
+    {
+        // Várunk, amíg a sötétítés tart (kb 1-2 másodperc)
+        yield return new WaitForSeconds(1.5f); 
+
+        if (levelCompletePanel != null)
+        {
+            levelCompletePanel.SetActive(true);
+            leveCompletePanelTitle.text = "LEVEL COMPLETE";
+            levelCompleteCoins.text = "COINS COLLECTED: " + coinCount.ToString() + " / " + totalCoins.ToString();
         }
     }
 
+    public void LoadNextLevel()
+    {
+        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
+        
+        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            Debug.Log("Betöltés: " + nextSceneIndex + " sorszámú pálya");
+            SceneManager.LoadScene(nextSceneIndex);
+        }
+        else
+        {
+            Debug.Log("Nincs több pálya. Irány a menü.");
+            SceneManager.LoadScene(0);
+        }
+    }
+
+    // --- HALÁL LOGIKA ---
+
+    public void Death()
+    {
+        if (!isGameOver && !isLevelComplete)
+        {
+            isGameOver = true;
+
+            if (UIManager.instance != null)
+            {
+                UIManager.instance.DisableMobileControls();
+                UIManager.instance.fadeToBlack = true;
+            }
+
+            if (playerController != null)
+            {
+                playerController.gameObject.SetActive(false);
+            }
+
+            StartCoroutine(DeathCoroutine());
+            Debug.Log("Player meghalt.");
+        }
+    }
+
+    public IEnumerator DeathCoroutine()
+    {
+        yield return new WaitForSeconds(2f);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void RetryLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 }
