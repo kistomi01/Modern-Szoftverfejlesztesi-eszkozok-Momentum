@@ -2,6 +2,9 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("PlayModeTests")]
 
 public class GameManager : MonoBehaviour
 {
@@ -16,10 +19,10 @@ public class GameManager : MonoBehaviour
     [Header("Player Reference")]
     [SerializeField] private PlayerController playerController;
 
-    private int coinCount = 0;
+    internal int coinCount = 0;
     private int gemCount = 0;
     private int totalCoins = 0;
-    private bool isGameOver = false;
+private bool isGameOver = false;
     private bool isLevelComplete = false; // Új: Megakadályozza a többszöri befejezést
 
     private void Awake()

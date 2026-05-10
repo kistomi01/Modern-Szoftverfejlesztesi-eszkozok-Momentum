@@ -31,9 +31,9 @@ public class PlayerController : MonoBehaviour
     [Header("Harcrendszer & Státusz")]
     public float fireRate = 0.5f; 
     private float nextFireTime = 0f; 
-    private Vector3 damagePosition;
+    internal Vector3 damagePosition;
     public bool isInvulnerable = false;
-    public float invulnerabilityDuration = 1.5f;
+public float invulnerabilityDuration = 1.5f;
     private Vector3 lastGroundedPosition;
 
     private Rigidbody2D rb;
