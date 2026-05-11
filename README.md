@@ -1,4 +1,4 @@
-# [Momentum 2D Platformer]
+# Momentum 2D Platformer
 
 ## Projekt Leírása
 Ez egy Unity motorral készült 2D platformer játék. 
@@ -7,7 +7,7 @@ A projekt célja a stabil technikai alapok bemutatása: mozgás, fizika, sebződ
 ## Futtatás és Build
 A projekt futtatható verziója (.exe) a GitHub **Releases** menüpontja alatt érhető el a `release` tag-nél, egy tömörített `.zip` fájlban.
 - **Platform:** Windows
-- **Futtatás:** A `.zip` kicsomagolása után a `[My Project].exe` fájllal indítható.
+- **Futtatás:** A `.zip` kicsomagolása után a `.exe` fájllal indítható.
 
 ## Tesztelés
 A projekt legalább 3 darab automata tesztesetet tartalmaz, amelyek a Unity **Test Runner** (Play Mode) segítségével futtathatóak:
